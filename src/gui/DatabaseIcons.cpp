@@ -106,6 +106,11 @@ int DatabaseIcons::count()
     return iconList.size();
 }
 
+void DatabaseIcons::clearCache()
+{
+    m_iconCache.clear();
+}
+
 int DatabaseIcons::iconSize(IconSize size)
 {
     switch (size) {

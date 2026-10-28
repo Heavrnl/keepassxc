@@ -38,6 +38,9 @@
 #include <QStandardPaths>
 #include <QStyle>
 #include <QTextStream>
+#if defined(__GLIBC__)
+#include <malloc.h>
+#endif
 #ifdef WITH_X11
 #include <QGuiApplication>
 
@@ -541,4 +544,11 @@ void NixUtils::configureGlobalShortcut(const QString& name)
     Q_UNUSED(name)
 
     globalShortcutsPortal()->configureShortcuts();
+}
+
+void NixUtils::trimWorkingSet()
+{
+#if defined(__GLIBC__)
+    malloc_trim(0);
+#endif
 }

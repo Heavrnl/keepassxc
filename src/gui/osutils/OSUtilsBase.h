@@ -76,6 +76,8 @@ public:
     virtual bool clearClipboardText(const QString& text);
     virtual bool isClipboardAvailable();
 
+    virtual void trimWorkingSet();
+
     virtual bool externalGlobalShortcutsConfigurator()
     {
         return false;

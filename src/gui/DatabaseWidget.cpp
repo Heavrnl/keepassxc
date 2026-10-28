@@ -27,6 +27,7 @@
 #include <QKeyEvent>
 #include <QPlainTextEdit>
 #include <QProcess>
+#include <QPixmapCache>
 #include <QSplitter>
 #include <QTextDocumentFragment>
 #include <QTextEdit>
@@ -38,14 +39,17 @@
 #include "core/Tools.h"
 #include "gui/Clipboard.h"
 #include "gui/CloneDialog.h"
+#include "gui/DatabaseIcons.h"
 #include "gui/DatabaseOpenDialog.h"
 #include "gui/DatabaseOpenWidget.h"
 #include "gui/EntryPreviewWidget.h"
 #include "gui/FileDialog.h"
 #include "gui/GuiTools.h"
+#include "gui/Icons.h"
 #include "gui/MainWindow.h"
 #include "gui/MergeDialog.h"
 #include "gui/MessageBox.h"
+#include "gui/osutils/OSUtils.h"
 #include "gui/TotpDialog.h"
 #include "gui/TotpExportSettingsDialog.h"
 #include "gui/TotpSetupDialog.h"
@@ -1352,6 +1356,7 @@ void DatabaseWidget::loadDatabase(bool accepted)
         m_entryBeforeLock = QUuid();
         m_saveAttempts = 0;
         emit databaseUnlocked();
+        QTimer::singleShot(200, this, [] { osUtils->trimWorkingSet(); });
 #ifdef KPXC_FEATURE_SSHAGENT
         sshAgent()->databaseUnlocked(m_db);
 #endif
@@ -1514,6 +1519,7 @@ void DatabaseWidget::unlockDatabase(bool accepted)
     switchToMainView();
     processAutoOpen();
     emit databaseUnlocked();
+    QTimer::singleShot(200, this, [] { osUtils->trimWorkingSet(); });
 
 #ifdef KPXC_FEATURE_SSHAGENT
     sshAgent()->databaseUnlocked(m_db);
@@ -2139,6 +2145,12 @@ bool DatabaseWidget::lock()
 
     m_attemptingLock = false;
     emit databaseLocked();
+
+    // 数据库锁定时清理位图/图标缓存并修剪物理工作集，释放全部临时页
+    QPixmapCache::clear();
+    databaseIcons()->clearCache();
+    icons()->clearCache();
+    osUtils->trimWorkingSet();
 
     return true;
 }

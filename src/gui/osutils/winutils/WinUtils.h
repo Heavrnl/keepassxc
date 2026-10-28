@@ -62,6 +62,8 @@ public:
     bool canPreventScreenCapture() const override;
     bool setPreventScreenCapture(QWindow* window, bool prevent) const override;
 
+    void trimWorkingSet() override;
+
 protected:
     explicit WinUtils(QObject* parent = nullptr);
     ~WinUtils() override = default;

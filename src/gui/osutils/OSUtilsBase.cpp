@@ -48,3 +48,8 @@ bool OSUtilsBase::isClipboardAvailable()
 {
     return false;
 }
+
+void OSUtilsBase::trimWorkingSet()
+{
+    // 默认空实现，由具体平台子类覆盖
+}

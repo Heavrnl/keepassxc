@@ -153,6 +153,9 @@ void Application::bootstrap(const QString& uiLanguage)
 {
     Bootstrap::bootstrap(uiLanguage);
 
+    // 限制 QPixmapCache 尺寸为 4096 KB (4 MB)，防止高 DPI 渲染和位图无节制占据内存
+    QPixmapCache::setCacheLimit(4096);
+
     osUtils->registerNativeEventFilter();
     MessageBox::initializeButtonDefs();
 

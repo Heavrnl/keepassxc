@@ -362,3 +362,9 @@ DWORD WinUtils::qtToNativeModifiers(Qt::KeyboardModifiers modifiers)
 
     return nativeModifiers;
 }
+
+void WinUtils::trimWorkingSet()
+{
+    // 调用 Win32 API 修剪当前进程工作集，将空闲和未修改的物理页交还给系统
+    ::SetProcessWorkingSetSize(::GetCurrentProcess(), static_cast<SIZE_T>(-1), static_cast<SIZE_T>(-1));
+}

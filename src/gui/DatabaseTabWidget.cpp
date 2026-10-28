@@ -32,6 +32,7 @@
 #include "gui/FileDialog.h"
 #include "gui/MessageBox.h"
 #include "gui/export/ExportDialog.h"
+#include "gui/osutils/OSUtils.h"
 #ifdef Q_OS_MACOS
 #include "gui/osutils/macutils/MacUtils.h"
 #endif
@@ -413,6 +414,7 @@ bool DatabaseTabWidget::closeDatabaseTab(DatabaseWidget* dbWidget)
     dbWidget->deleteLater();
     toggleTabbar();
     emit databaseClosed(filePath);
+    osUtils->trimWorkingSet();
     return true;
 }
 

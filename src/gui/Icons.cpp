@@ -189,8 +189,16 @@ QIcon Icons::icon(const QString& name, bool recolor, const QColor& overrideColor
         icon.setIsMask(true);
     }
 
+    if (m_iconCache.size() > 128) {
+        m_iconCache.clear();
+    }
     m_iconCache.insert(cacheName, icon);
     return icon;
+}
+
+void Icons::clearCache()
+{
+    m_iconCache.clear();
 }
 
 QIcon Icons::onOffIcon(const QString& name, bool on, bool recolor)

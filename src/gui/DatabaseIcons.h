@@ -46,6 +46,7 @@ public:
     QPixmap icon(int index, IconSize size = IconSize::Default);
     QPixmap applyBadge(const QPixmap& basePixmap, Badges badgeIndex);
     int count();
+    void clearCache();
 
     int iconSize(IconSize size);
 

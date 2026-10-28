@@ -61,6 +61,8 @@ public:
     bool externalGlobalShortcutsConfigurator() override;
     bool isWayland() const;
 
+    void trimWorkingSet() override;
+
     GlobalShortcutsPortal* globalShortcutsPortal();
     RemoteDesktopPortal* remoteDesktopPortal();
 

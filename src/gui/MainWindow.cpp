@@ -25,6 +25,7 @@
 #include <QFileInfo>
 #include <QList>
 #include <QMimeData>
+#include <QPixmapCache>
 #include <QShortcut>
 #include <QStatusBar>
 #include <QTimer>
@@ -43,6 +44,7 @@
 #include "core/Tools.h"
 #include "gui/AboutDialog.h"
 #include "gui/ActionCollection.h"
+#include "gui/DatabaseIcons.h"
 #include "gui/Icons.h"
 #include "gui/MessageBox.h"
 #include "gui/SearchWidget.h"
@@ -1384,6 +1386,11 @@ void MainWindow::changeEvent(QEvent* event)
         if (config()->get(Config::Security_LockDatabaseMinimize).toBool()) {
             m_ui->tabWidget->lockDatabasesDelayed();
         }
+
+        // 窗口最小化时清理渲染缓存并修剪物理工作集，释放空闲内存
+        QPixmapCache::clear();
+        databaseIcons()->clearCache();
+        osUtils->trimWorkingSet();
     } else {
         QMainWindow::changeEvent(event);
     }
@@ -1794,6 +1801,11 @@ void MainWindow::hideWindow()
     if (config()->get(Config::Security_LockDatabaseMinimize).toBool()) {
         m_ui->tabWidget->lockDatabasesDelayed();
     }
+
+    // 隐藏窗口到系统托盘时清理位图缓存并修剪工作集
+    QPixmapCache::clear();
+    databaseIcons()->clearCache();
+    osUtils->trimWorkingSet();
 }
 
 void MainWindow::minimizeOrHide()
