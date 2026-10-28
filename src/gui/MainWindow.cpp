@@ -74,6 +74,10 @@
 #include "browser/BrowserService.h"
 #endif
 
+#if defined(Q_OS_WIN)
+#include "windows/WindowsPasskeyService.h"
+#endif
+
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS) && !defined(QT_NO_DBUS)
 #include "mainwindowadaptor.h"
 #endif
@@ -209,6 +213,18 @@ MainWindow::MainWindow()
 #ifdef KPXC_FEATURE_BROWSER
     connect(
         browserService(), &BrowserService::requestUnlock, m_ui->tabWidget, &DatabaseTabWidget::performBrowserUnlock);
+#endif
+
+#if defined(Q_OS_WIN)
+    windowsPasskeyService()->init(this);
+    windowsPasskeyService()->start();
+
+    connect(m_ui->tabWidget, &DatabaseTabWidget::databaseUnlocked, this, []() {
+        windowsPasskeyService()->notifyCredentialsChanged();
+    });
+    connect(m_ui->tabWidget, &DatabaseTabWidget::databaseLocked, this, []() {
+        windowsPasskeyService()->notifyCredentialsChanged();
+    });
 #endif
 
 #ifdef KPXC_FEATURE_SSHAGENT

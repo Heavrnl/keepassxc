@@ -284,6 +284,7 @@ endif()
 
 if(WIN32)
     list(APPEND gui_SOURCES
+            windows/WindowsPasskeyService.cpp
             gui/osutils/winutils/DeviceListenerWin.cpp
             gui/osutils/winutils/ScreenLockListenerWin.cpp
             gui/osutils/winutils/WinUtils.cpp)
@@ -396,7 +397,7 @@ if(UNIX AND NOT APPLE)
     endif()
 endif()
 if(WIN32)
-    target_link_libraries(keepassxc_gui Wtsapi32.lib Ws2_32.lib)
+    target_link_libraries(keepassxc_gui Wtsapi32.lib Ws2_32.lib advapi32 ${BOTAN_LIBRARIES})
     if (WINSDK)
         target_link_libraries(keepassxc_gui WindowsApp.lib)
     endif()
