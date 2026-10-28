@@ -361,7 +361,7 @@ QJsonObject WindowsPasskeyService::handleGetCredentials(const QJsonObject& req)
 
         const auto entries = db->rootGroup()->entriesRecursive(false);
         for (auto* entry : entries) {
-            if (!entry->hasPasskey()) {
+            if (entry->isRecycled() || !entry->hasPasskey()) {
                 continue;
             }
 
@@ -453,6 +453,9 @@ QJsonObject WindowsPasskeyService::handleFindMatchingEntries(const QJsonObject& 
 
         const auto entries = db->rootGroup()->entriesRecursive(false);
         for (auto* entry : entries) {
+            if (entry->isRecycled()) {
+                continue;
+            }
             bool match = false;
             auto* attrs = entry->attributes();
             if (attrs->value(EntryAttributes::KPEX_PASSKEY_RELYING_PARTY) == rpId) {
@@ -515,7 +518,7 @@ QJsonObject WindowsPasskeyService::handleMakeCredential(const QJsonObject& req)
         for (auto* db : dbs) {
             const auto entries = db->rootGroup()->entriesRecursive(false);
             for (auto* entry : entries) {
-                if (!entry->hasPasskey()) continue;
+                if (entry->isRecycled() || !entry->hasPasskey()) continue;
                 auto* attrs = entry->attributes();
                 if (attrs->value(EntryAttributes::KPEX_PASSKEY_RELYING_PARTY) == rpId
                     && excludeSet.contains(attrs->value(EntryAttributes::KPEX_PASSKEY_CREDENTIAL_ID))) {
@@ -580,6 +583,7 @@ QJsonObject WindowsPasskeyService::handleMakeCredential(const QJsonObject& req)
         QString entryUuidHex = targetEntryObj.value("entryUuid").toString();
         const auto entries = targetDb->rootGroup()->entriesRecursive(false);
         for (auto* e : entries) {
+            if (e->isRecycled()) continue;
             if (Tools::uuidToHex(e->uuid()).compare(entryUuidHex, Qt::CaseInsensitive) == 0) {
                 targetEntry = e;
                 break;
@@ -660,7 +664,7 @@ QJsonObject WindowsPasskeyService::handleGetAssertion(const QJsonObject& req)
     for (auto* db : dbs) {
         const auto entries = db->rootGroup()->entriesRecursive(false);
         for (auto* entry : entries) {
-            if (!entry->hasPasskey()) continue;
+            if (entry->isRecycled() || !entry->hasPasskey()) continue;
             auto* attrs = entry->attributes();
             if (attrs->value(EntryAttributes::KPEX_PASSKEY_RELYING_PARTY) == rpId) {
                 QString credId = attrs->value(EntryAttributes::KPEX_PASSKEY_CREDENTIAL_ID);
