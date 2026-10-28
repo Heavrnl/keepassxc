@@ -74,12 +74,16 @@ private:
     QByteArray signData(const QString& privateKeyPem, const QByteArray& dataToSign);
     QString entryIconBase64(Entry* entry);
 
+    void initSettings();
+    void saveSettingsToDisk();
+
     QPointer<MainWindow> m_mainWindow;
     QList<QLocalServer*> m_servers;
     QMap<QLocalSocket*, QByteArray> m_clientBuffers;
 
     QString m_userSid;
     bool m_running = false;
+    QJsonObject m_settings;
 };
 
 static inline WindowsPasskeyService* windowsPasskeyService()

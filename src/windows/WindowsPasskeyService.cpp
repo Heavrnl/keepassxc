@@ -44,6 +44,7 @@
 #include <QLocalSocket>
 #include <QPainter>
 #include <QProcess>
+#include <QSettings>
 #include <QStandardPaths>
 #include <QtEndian>
 
@@ -84,6 +85,7 @@ WindowsPasskeyService::WindowsPasskeyService(QObject* parent)
     : QObject(parent)
 {
     m_userSid = getCurrentUserSid();
+    initSettings();
 }
 
 WindowsPasskeyService::~WindowsPasskeyService()
@@ -350,6 +352,9 @@ QJsonObject WindowsPasskeyService::handleGetCredentials(const QJsonObject& req)
 
     for (auto* db : dbs) {
         QString dbName = db->metadata()->name();
+        if (dbName.isEmpty() && !db->filePath().isEmpty()) {
+            dbName = QFileInfo(db->filePath()).fileName();
+        }
         if (dbName.isEmpty()) {
             dbName = QStringLiteral("(unnamed)");
         }
@@ -408,6 +413,9 @@ QJsonObject WindowsPasskeyService::handleGetDatabases(const QJsonObject&)
         QJsonObject dbObj;
         dbObj["id"] = Tools::uuidToHex(db->rootGroup()->uuid());
         QString name = db->metadata()->name();
+        if (name.isEmpty() && !db->filePath().isEmpty()) {
+            name = QFileInfo(db->filePath()).fileName();
+        }
         dbObj["name"] = name.isEmpty() ? QStringLiteral("(unnamed)") : name;
         dbsArray.append(dbObj);
     }
@@ -750,27 +758,75 @@ QJsonObject WindowsPasskeyService::handleUnlockDatabase(const QJsonObject& req)
     return reply;
 }
 
+void WindowsPasskeyService::initSettings()
+{
+    // Default settings: Default to Notification mode (no Windows Hello PIN prompt required!)
+    m_settings["logLevel"] = "Info";
+    m_settings["newPasskeyBackupEligible"] = true;
+    m_settings["newPasskeyBackupState"] = true;
+    m_settings["userVerificationMode"] = "Notification";
+    m_settings["registrationVerification"] = "Notification";
+    m_settings["signInVerification"] = "Notification";
+    m_settings["excludeCredentialCheckMode"] = "TargetDatabase";
+    m_settings["newEntryGroupMode"] = "PasskeysGroup";
+    m_settings["entryTitleTemplate"] = "{RP_NAME} (Passkey)";
+    m_settings["resolveTitlePlaceholders"] = true;
+    m_settings["saveToExistingEntry"] = true;
+    m_settings["addPasskeyTag"] = true;
+    m_settings["showErrorNotifications"] = true;
+    m_settings["useLegacyNotificationPrompts"] = false;
+    m_settings["skipWindowsHelloAfterUnlock"] = false;
+    m_settings["notificationVerificationTimeoutMilliseconds"] = 60000;
+
+    // Load persisted settings from KeePassXC QSettings
+    QSettings config;
+    config.beginGroup(QStringLiteral("WindowsPasskey"));
+    QString jsonStr = config.value(QStringLiteral("SettingsJson")).toString();
+    config.endGroup();
+
+    if (!jsonStr.isEmpty()) {
+        QJsonDocument doc = QJsonDocument::fromJson(jsonStr.toUtf8());
+        if (doc.isObject()) {
+            const auto saved = doc.object();
+            for (auto it = saved.constBegin(); it != saved.constEnd(); ++it) {
+                m_settings[it.key()] = it.value();
+            }
+        }
+    }
+}
+
+void WindowsPasskeyService::saveSettingsToDisk()
+{
+    QJsonDocument doc(m_settings);
+    QString jsonStr = QString::fromUtf8(doc.toJson(QJsonDocument::Compact));
+
+    QSettings config;
+    config.beginGroup(QStringLiteral("WindowsPasskey"));
+    config.setValue(QStringLiteral("SettingsJson"), jsonStr);
+    config.endGroup();
+}
+
 QJsonObject WindowsPasskeyService::handleGetSettings(const QJsonObject&)
 {
     QJsonObject reply;
     reply["type"] = "get_settings";
-
-    QJsonObject settings;
-    settings["logLevel"] = "info";
-    settings["newPasskeyBackupEligible"] = true;
-    settings["newPasskeyBackupState"] = true;
-    settings["userVerificationMode"] = "when_requested";
-    settings["excludeCredentialCheckMode"] = "selected_entry_or_create";
-    settings["passkeyEntryGroupMode"] = "root_group";
-
-    reply["settings"] = settings;
+    reply["settings"] = m_settings;
     return reply;
 }
 
-QJsonObject WindowsPasskeyService::handleSaveSettings(const QJsonObject&)
+QJsonObject WindowsPasskeyService::handleSaveSettings(const QJsonObject& req)
 {
     QJsonObject reply;
     reply["type"] = "save_settings";
+
+    if (req.contains("settings") && req["settings"].isObject()) {
+        const auto newSettings = req["settings"].toObject();
+        for (auto it = newSettings.constBegin(); it != newSettings.constEnd(); ++it) {
+            m_settings[it.key()] = it.value();
+        }
+        saveSettingsToDisk();
+    }
+
     return reply;
 }
 
