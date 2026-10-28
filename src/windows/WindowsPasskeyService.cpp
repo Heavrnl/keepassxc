@@ -602,7 +602,15 @@ QJsonObject WindowsPasskeyService::handleMakeCredential(const QJsonObject& req)
         targetEntry->setTitle(rpName.isEmpty() ? rpId : rpName);
         targetEntry->setUsername(userName);
         targetEntry->setUrl(QString("https://%1").arg(rpId));
-        targetDb->rootGroup()->addEntry(targetEntry);
+
+        Group* targetGroup = targetDb->rootGroup();
+        for (auto* g : targetDb->rootGroup()->children()) {
+            if (g->name().compare(QStringLiteral("Passkeys"), Qt::CaseInsensitive) == 0 && !g->isRecycled()) {
+                targetGroup = g;
+                break;
+            }
+        }
+        targetEntry->setGroup(targetGroup);
     }
 
     auto* attrs = targetEntry->attributes();
